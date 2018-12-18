@@ -1,18 +1,36 @@
 import { from, Observable, zip } from 'rxjs'
-import { catchError, filter, map, switchMap } from 'rxjs/operators'
-import { DifferentialState, DiffusionState, PhabricatorMode } from '.'
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators'
+import { DifferentialState, DiffusionState, PhabricatorMode, RevisionState } from '.'
 import { fetchBlobContentLines } from '../../shared/repo/backend'
 import { FileInfo } from '../code_intelligence'
 import { ensureRevisionsAreCloned } from '../code_intelligence/util/file_info'
 import { resolveDiffRev } from './backend'
-import { getFilepathFromFile, getPhabricatorState } from './util'
+import { getFilepathFromFileForDiff, getFilePathFromFileForRevision } from './scrape'
+import { getPhabricatorState } from './util'
+
+export const resolveRevisionFileInfo = (codeView: HTMLElement): Observable<FileInfo> =>
+    from(getPhabricatorState(window.location)).pipe(
+        filter((state): state is RevisionState => state !== null && state.mode === PhabricatorMode.Revision),
+        map(state => ({
+            repoName: state.repoName,
+            commitID: state.headCommitID,
+            baseCommitID: state.baseCommitID,
+        })),
+        map(info => ({
+            ...info,
+            filePath: getFilePathFromFileForRevision(codeView),
+        })),
+        tap(a => {
+            console.log('file', a)
+        })
+    )
 
 export const resolveDiffFileInfo = (codeView: HTMLElement): Observable<FileInfo> =>
     from(getPhabricatorState(window.location)).pipe(
         filter(state => state !== null && state.mode === PhabricatorMode.Differential),
         map(state => state as DifferentialState),
         map(state => {
-            const { filePath, baseFilePath } = getFilepathFromFile(codeView)
+            const { filePath, baseFilePath } = getFilepathFromFileForDiff(codeView)
 
             return {
                 ...state,

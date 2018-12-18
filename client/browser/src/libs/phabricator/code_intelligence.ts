@@ -5,9 +5,9 @@ import { convertSpacesToTabs, spacesToTabsAdjustment } from '.'
 import { FileSpec, RepoSpec, ResolvedRevSpec, RevSpec } from '../../../../../shared/src/util/url'
 import storage from '../../browser/storage'
 import { fetchBlobContentLines } from '../../shared/repo/backend'
-import { CodeHost, CodeView } from '../code_intelligence'
+import { CodeHost, CodeView, CodeViewResolver, CodeViewWithOutSelector } from '../code_intelligence'
 import { diffDomFunctions, diffusionDOMFns, getLineRanges } from './dom_functions'
-import { resolveDiffFileInfo, resolveDiffusionFileInfo } from './file_info'
+import { resolveDiffFileInfo, resolveDiffusionFileInfo, resolveRevisionFileInfo } from './file_info'
 
 function createMount(
     findMountLocation: (file: HTMLElement, part?: DiffPart) => HTMLElement
@@ -24,6 +24,7 @@ function createMount(
         mount.style.display = 'inline-block'
         mount.classList.add(className)
 
+        console.log('file!', file)
         const mountLocation = findMountLocation(file, part)
         mountLocation.appendChild(mount)
 
@@ -102,25 +103,53 @@ const toolbarButtonProps = {
     iconStyle: { marginTop: '-1px', paddingRight: '4px', fontSize: '18px', height: '.8em', width: '.8em' },
     style: {},
 }
+const commitCodeView: CodeViewWithOutSelector = {
+    dom: diffDomFunctions,
+    resolveFileInfo: resolveRevisionFileInfo,
+    adjustPosition,
+    getToolbarMount: createMount(file => {
+        const actionLinks = file.querySelector('.differential-changeset-buttons')
+        if (!actionLinks) {
+            throw new Error('Unable to find action links for revision')
+        }
+
+        return actionLinks as HTMLElement
+    }),
+    toolbarButtonProps,
+    getLineRanges,
+    isDiff: true,
+}
+const diffCodeView: CodeViewWithOutSelector = {
+    dom: diffDomFunctions,
+    resolveFileInfo: resolveDiffFileInfo,
+    adjustPosition,
+    getToolbarMount: createMount(file => {
+        const actionLinks = file.querySelector('.differential-changeset-buttons')
+        if (!actionLinks) {
+            throw new Error('Unable to find action links for changeset')
+        }
+
+        return actionLinks as HTMLElement
+    }),
+    toolbarButtonProps,
+    getLineRanges,
+    isDiff: true,
+}
+
+const resolveCodeView: CodeViewResolver['resolveCodeView'] = (codeView: HTMLElement) => {
+    if (window.location.pathname.match(/^\/r/)) {
+        return commitCodeView
+    }
+
+    return diffCodeView
+}
+
+const codeViewResolver: CodeViewResolver = {
+    selector: '.differential-changeset',
+    resolveCodeView,
+}
 
 export const phabCodeViews: CodeView[] = [
-    {
-        selector: '.differential-changeset',
-        dom: diffDomFunctions,
-        resolveFileInfo: resolveDiffFileInfo,
-        adjustPosition,
-        getToolbarMount: createMount(file => {
-            const actionLinks = file.querySelector('.differential-changeset-buttons')
-            if (!actionLinks) {
-                throw new Error('Unable to find action links for changeset')
-            }
-
-            return actionLinks as HTMLElement
-        }),
-        toolbarButtonProps,
-        getLineRanges,
-        isDiff: true,
-    },
     {
         selector: '.phabricator-source-code-container',
         dom: diffusionDOMFns,
@@ -151,6 +180,7 @@ function checkIsPhabricator(): Promise<boolean> {
 
 export const phabricatorCodeHost: CodeHost = {
     codeViews: phabCodeViews,
+    codeViewResolver,
     name: 'phabricator',
     check: checkIsPhabricator,
 }

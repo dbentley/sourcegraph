@@ -26,6 +26,13 @@ import (
 	tracepkg "github.com/sourcegraph/sourcegraph/pkg/trace"
 )
 
+func gotHereMiddleware(message string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Got to %s\n", message)
+		next.ServeHTTP(w, r)
+	})
+}
+
 // newExternalHTTPHandler creates and returns the HTTP handler that serves the app and API pages to
 // external clients.
 func newExternalHTTPHandler(ctx context.Context) (http.Handler, error) {
@@ -35,6 +42,7 @@ func newExternalHTTPHandler(ctx context.Context) (http.Handler, error) {
 
 	// HTTP API handler.
 	apiHandler := httpapi.NewHandler(router.New(mux.NewRouter().PathPrefix("/.api/").Subrouter()))
+	apiHandler = gotHereMiddleware("api auth", apiHandler)
 	apiHandler = authMiddlewares.API(apiHandler) // 🚨 SECURITY: auth middleware
 	// 🚨 SECURITY: The HTTP API should not accept cookies as authentication (except those with the
 	// X-Requested-With header). Doing so would open it up to CSRF attacks.
@@ -142,6 +150,7 @@ func secureHeadersMiddleware(next http.Handler) http.Handler {
 		// to the incoming header URL. Otherwise use the configured CORS origin.
 		headerOrigin := r.Header.Get("Origin")
 		isExtensionRequest := (headerOrigin == devExtension || headerOrigin == prodExtension) && !conf.Get().DisableBrowserExtension
+
 		if corsOrigin := conf.Get().CorsOrigin; corsOrigin != "" || isExtensionRequest {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -150,6 +159,11 @@ func secureHeadersMiddleware(next http.Handler) http.Handler {
 				allowOrigin = headerOrigin
 			}
 
+			fmt.Println(r.Method, "allow origin", allowOrigin)
+			fmt.Println("cookies:")
+			for _, c := range r.Cookies() {
+				fmt.Printf("Cookie %s: %v\n", c.Name, c.Value)
+			}
 			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 			if r.Method == "OPTIONS" {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")

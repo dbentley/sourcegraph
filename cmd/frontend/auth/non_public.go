@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -24,8 +25,10 @@ var RequireAuthMiddleware = &Middleware{
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If an anonymous user tries to access an API endpoint that requires authentication,
 			// prevent access.
+			fmt.Println(actor.FromContext(r.Context()))
 			if !actor.FromContext(r.Context()).IsAuthenticated() && !AllowAnonymousRequest(r) {
 				// Report HTTP 401 Unauthorized for API requests.
+				fmt.Println("woooooooooops")
 				http.Error(w, "Private mode requires authentication.", http.StatusUnauthorized)
 				return
 			}

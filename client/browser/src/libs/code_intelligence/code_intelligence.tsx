@@ -15,7 +15,7 @@ import * as H from 'history'
 import * as React from 'react'
 import { createPortal, render } from 'react-dom'
 import { animationFrameScheduler, Observable, of, Subject, Subscription } from 'rxjs'
-import { filter, map, mergeMap, observeOn, withLatestFrom } from 'rxjs/operators'
+import { filter, map, mergeMap, observeOn, tap, withLatestFrom } from 'rxjs/operators'
 import { registerHighlightContributions } from '../../../../../shared/src/highlight/contributions'
 
 import { HoverMerged } from '@sourcegraph/codeintellify/lib/types'
@@ -420,9 +420,15 @@ function handleCodeHost(codeHost: CodeHost): Subscription {
         of(document.body)
             .pipe(
                 findCodeViews(codeHost),
+                tap(a => {
+                    console.log('a', a)
+                }),
                 mergeMap(({ codeView, resolveFileInfo, ...rest }) =>
                     resolveFileInfo(codeView).pipe(map(info => ({ info, codeView, ...rest })))
                 ),
+                tap(a => {
+                    console.log('b', a)
+                }),
                 observeOn(animationFrameScheduler)
             )
             .subscribe(
