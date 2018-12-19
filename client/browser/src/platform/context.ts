@@ -5,6 +5,7 @@ import { PlatformContext } from '../../../../shared/src/platform/context'
 import { mutateSettings, updateSettings } from '../../../../shared/src/settings/edit'
 import { EMPTY_SETTINGS_CASCADE, gqlToCascade } from '../../../../shared/src/settings/settings'
 import { LocalStorageSubject } from '../../../../shared/src/util/LocalStorageSubject'
+import { ExtensionStorageSubject } from '../browser/ExtensionStorageSubject'
 import * as runtime from '../browser/runtime'
 import storage from '../browser/storage'
 import { getContext } from '../shared/backend/context'
@@ -109,6 +110,7 @@ export function createPlatformContext(): PlatformContext {
         sourcegraphURL: sourcegraphUrl,
         clientApplication: 'other',
         traceExtensionHostCommunication: new LocalStorageSubject<boolean>('traceExtensionHostCommunication', false),
+        unpackedExtensionURL: new ExtensionStorageSubject('unpackedExtensionURL', ''),
     }
     return context
 }
