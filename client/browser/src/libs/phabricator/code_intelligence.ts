@@ -6,7 +6,7 @@ import { FileSpec, RepoSpec, ResolvedRevSpec, RevSpec } from '../../../../../sha
 import storage from '../../browser/storage'
 import { fetchBlobContentLines } from '../../shared/repo/backend'
 import { CodeHost, CodeView, CodeViewResolver, CodeViewWithOutSelector } from '../code_intelligence'
-import { diffDomFunctions, diffusionDOMFns, getLineRanges } from './dom_functions'
+import { diffDomFunctions, diffusionDOMFns } from './dom_functions'
 import { resolveDiffFileInfo, resolveDiffusionFileInfo, resolveRevisionFileInfo } from './file_info'
 
 function createMount(
@@ -24,7 +24,6 @@ function createMount(
         mount.style.display = 'inline-block'
         mount.classList.add(className)
 
-        console.log('file!', file)
         const mountLocation = findMountLocation(file, part)
         mountLocation.appendChild(mount)
 
@@ -107,16 +106,21 @@ const commitCodeView: CodeViewWithOutSelector = {
     dom: diffDomFunctions,
     resolveFileInfo: resolveRevisionFileInfo,
     adjustPosition,
-    getToolbarMount: createMount(file => {
-        const actionLinks = file.querySelector('.differential-changeset-buttons')
-        if (!actionLinks) {
+    getToolbarMount: codeView => {
+        const actions = codeView.querySelector('.differential-changeset-buttons')
+        if (!actions) {
             throw new Error('Unable to find action links for revision')
         }
 
-        return actionLinks as HTMLElement
-    }),
+        const mount = document.createElement('div')
+        mount.style.display = 'inline-block'
+        mount.classList.add('sourcegraph-app-annotator')
+
+        actions.insertAdjacentElement('afterbegin', mount)
+
+        return mount
+    },
     toolbarButtonProps,
-    getLineRanges,
     isDiff: true,
 }
 const diffCodeView: CodeViewWithOutSelector = {
@@ -132,7 +136,6 @@ const diffCodeView: CodeViewWithOutSelector = {
         return actionLinks as HTMLElement
     }),
     toolbarButtonProps,
-    getLineRanges,
     isDiff: true,
 }
 
@@ -163,7 +166,6 @@ export const phabCodeViews: CodeView[] = [
             return actionLinks as HTMLElement
         }),
         toolbarButtonProps,
-        getLineRanges,
         isDiff: false,
     },
 ]

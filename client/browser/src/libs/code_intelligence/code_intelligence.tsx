@@ -35,6 +35,7 @@ import {
     toURIWithPath,
     ViewStateSpec,
 } from '../../../../../shared/src/util/url'
+import { isInPage } from '../../context'
 import {
     createJumpURLFetcher,
     createLSPFromExtensions,
@@ -232,7 +233,12 @@ function initCodeIntelligence(
         extensionsController,
     }: PlatformContextProps & ExtensionsControllerProps = initializeExtensions(codeHost)
 
-    const shouldUseExtensions = useExtensions || sourcegraphUrl === 'https://sourcegraph.com'
+    const shouldUseExtensions =
+        useExtensions ||
+        // TODO: Don't assume all in page extensions.
+        // See if we can hit .api/xlang and not get a 404 for old versions.
+        isInPage ||
+        sourcegraphUrl === 'https://sourcegraph.com'
     const { fetchHover, fetchDefinition } = shouldUseExtensions
         ? createLSPFromExtensions(extensionsController)
         : lspViaAPIXlang
@@ -420,15 +426,9 @@ function handleCodeHost(codeHost: CodeHost): Subscription {
         of(document.body)
             .pipe(
                 findCodeViews(codeHost),
-                tap(a => {
-                    console.log('a', a)
-                }),
                 mergeMap(({ codeView, resolveFileInfo, ...rest }) =>
                     resolveFileInfo(codeView).pipe(map(info => ({ info, codeView, ...rest })))
                 ),
-                tap(a => {
-                    console.log('b', a)
-                }),
                 observeOn(animationFrameScheduler)
             )
             .subscribe(

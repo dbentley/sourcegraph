@@ -47,7 +47,21 @@ export class ExtensionsService {
      * Most callers should use {@link ExtensionsService#activeExtensions}.
      */
     private get enabledExtensions(): Subscribable<ConfiguredExtension[]> {
-        return combineLatest(from(this.settingsService.data), this.configuredExtensions).pipe(
+        return combineLatest(
+            from(this.settingsService.data).pipe(
+                tap(a => {
+                    console.log('settings serv data', a)
+                })
+            ),
+            from(this.configuredExtensions).pipe(
+                tap(a => {
+                    console.log('configed ext', a)
+                })
+            )
+        ).pipe(
+            tap(a => {
+                console.log('combined', a)
+            }),
             map(([settings, configuredExtensions]) =>
                 configuredExtensions.filter(x => isExtensionEnabled(settings.final, x.id))
             )
@@ -71,10 +85,25 @@ export class ExtensionsService {
      * previously activated in prior states.
      */
     public get activeExtensions(): Subscribable<ExecutableExtension[]> {
+        console.log('getting active extensions')
         // Extensions that have been activated (including extensions with zero "activationEvents" that evaluate to
         // true currently).
         const activatedExtensionIDs: string[] = []
-        return combineLatest(from(this.model), this.enabledExtensions).pipe(
+        return combineLatest(
+            from(this.model).pipe(
+                tap(a => {
+                    console.log('a', a)
+                })
+            ),
+            from(this.enabledExtensions).pipe(
+                tap(a => {
+                    console.log('b', a)
+                })
+            )
+        ).pipe(
+            tap(a => {
+                console.log('c', a)
+            }),
             tap(([model, enabledExtensions]) => {
                 const activeExtensions = this.extensionActivationFilter(enabledExtensions, model)
                 for (const x of activeExtensions) {
@@ -103,7 +132,10 @@ export class ExtensionsService {
                     )
                 )
             ),
-            map(extensions => extensions.filter((x): x is ExecutableExtension => x !== null))
+            map(extensions => extensions.filter((x): x is ExecutableExtension => x !== null)),
+            tap(a => {
+                console.log('got', a)
+            })
         )
     }
 
