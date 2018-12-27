@@ -507,7 +507,6 @@ function handleCodeHost(codeHost: CodeHost): Subscription {
                         extensionsController.services.textDocumentDecoration
                             .getDecorations(toTextDocumentIdentifier(info))
                             .subscribe(decorations => {
-                                console.log('got decorations', decorations)
                                 decoratedLines = applyDecorations(dom, codeView, decorations || [], decoratedLines)
                             })
                     }

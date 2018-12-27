@@ -154,17 +154,23 @@ const codeViewResolver: CodeViewResolver = {
 
 export const phabCodeViews: CodeView[] = [
     {
-        selector: '.phabricator-source-code-container',
+        selector: '.diffusion-source',
         dom: diffusionDOMFns,
         resolveFileInfo: resolveDiffusionFileInfo,
-        getToolbarMount: createMount(() => {
-            const actionLinks = document.querySelector('.diffusion-action-bar .phui-right-view')
-            if (!actionLinks) {
-                throw new Error('Unable to find action links for diffusion')
+        getToolbarMount: () => {
+            const actions = document.querySelector<HTMLElement>('.phui-two-column-content .phui-header-action-links')
+            if (!actions) {
+                throw new Error('unable to find file actions')
             }
 
-            return actionLinks as HTMLElement
-        }),
+            const mount = document.createElement('div')
+            mount.style.display = 'inline-block'
+            mount.classList.add('sourcegraph-app-annotator')
+
+            actions.insertAdjacentElement('afterbegin', mount)
+
+            return mount
+        },
         toolbarButtonProps,
         isDiff: false,
     },
