@@ -1,5 +1,5 @@
-import { combineLatest, merge, ReplaySubject, throwError } from 'rxjs'
-import { map, mergeMap, publishReplay, refCount, switchMap, take, tap } from 'rxjs/operators'
+import { combineLatest, merge, ReplaySubject } from 'rxjs'
+import { map, mergeMap, publishReplay, refCount, switchMap, take } from 'rxjs/operators'
 import * as GQL from '../../../../shared/src/graphql/schema'
 import { PlatformContext } from '../../../../shared/src/platform/context'
 import { mutateSettings, updateSettings } from '../../../../shared/src/settings/edit'
@@ -12,8 +12,7 @@ import { isInPage } from '../context'
 import { CodeHost } from '../libs/code_intelligence'
 import { getContext } from '../shared/backend/context'
 import { requestGraphQL } from '../shared/backend/graphql'
-import { sendLSPHTTPRequests } from '../shared/backend/lsp'
-import { canFetchForURL, sourcegraphUrl } from '../shared/util/context'
+import { sourcegraphUrl } from '../shared/util/context'
 import { createExtensionHost } from './extensionHost'
 import { editClientSettings, fetchViewerSettings, mergeCascades, storageSettingsCascade } from './settings'
 import { createBlobURLForBundle } from './worker'
@@ -96,13 +95,6 @@ export function createPlatformContext({ urlToFile }: Pick<CodeHost, 'urlToFile'>
                 )
             )
         },
-        backcompatQueryLSP: canFetchForURL(sourcegraphUrl)
-            ? requests =>
-                  sendLSPHTTPRequests(requests)
-            : () =>
-                  throwError(
-                      'The queryLSP command is unavailable because the current repository does not exist on the Sourcegraph instance.'
-                  ),
         forceUpdateTooltip: () => {
             // TODO(sqs): implement tooltips on the browser extension
         },

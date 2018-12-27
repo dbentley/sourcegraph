@@ -15,7 +15,7 @@ import * as H from 'history'
 import * as React from 'react'
 import { createPortal, render } from 'react-dom'
 import { animationFrameScheduler, Observable, of, Subject, Subscription } from 'rxjs'
-import { filter, map, mergeMap, observeOn, tap, withLatestFrom } from 'rxjs/operators'
+import { filter, map, mergeMap, observeOn, withLatestFrom } from 'rxjs/operators'
 import { registerHighlightContributions } from '../../../../../shared/src/highlight/contributions'
 
 import { HoverMerged } from '@sourcegraph/codeintellify/lib/types'
@@ -35,15 +35,9 @@ import {
     toURIWithPath,
     ViewStateSpec,
 } from '../../../../../shared/src/util/url'
-import { isInPage } from '../../context'
-import {
-    createJumpURLFetcher,
-    createLSPFromExtensions,
-    lspViaAPIXlang,
-    toTextDocumentIdentifier,
-} from '../../shared/backend/lsp'
+import { createJumpURLFetcher, createLSPFromExtensions, toTextDocumentIdentifier } from '../../shared/backend/lsp'
 import { ButtonProps, CodeViewToolbar } from '../../shared/components/CodeViewToolbar'
-import { eventLogger, sourcegraphUrl, useExtensions } from '../../shared/util/context'
+import { eventLogger, sourcegraphUrl } from '../../shared/util/context'
 import { bitbucketServerCodeHost } from '../bitbucket/code_intelligence'
 import { githubCodeHost } from '../github/code_intelligence'
 import { gitlabCodeHost } from '../gitlab/code_intelligence'
@@ -233,15 +227,7 @@ function initCodeIntelligence(
         extensionsController,
     }: PlatformContextProps & ExtensionsControllerProps = initializeExtensions(codeHost)
 
-    const shouldUseExtensions =
-        useExtensions ||
-        // TODO: Don't assume all in page extensions.
-        // See if we can hit .api/xlang and not get a 404 for old versions.
-        isInPage ||
-        sourcegraphUrl === 'https://sourcegraph.com'
-    const { fetchHover, fetchDefinition } = shouldUseExtensions
-        ? createLSPFromExtensions(extensionsController)
-        : lspViaAPIXlang
+    const { fetchHover, fetchDefinition } = createLSPFromExtensions(extensionsController)
 
     /** Emits when the go to definition button was clicked */
     const goToDefinitionClicks = new Subject<MouseEvent>()
@@ -521,6 +507,7 @@ function handleCodeHost(codeHost: CodeHost): Subscription {
                         extensionsController.services.textDocumentDecoration
                             .getDecorations(toTextDocumentIdentifier(info))
                             .subscribe(decorations => {
+                                console.log('got decorations', decorations)
                                 decoratedLines = applyDecorations(dom, codeView, decorations || [], decoratedLines)
                             })
                     }

@@ -51,10 +51,6 @@ export function createPlatformContext(): PlatformContext {
                 `,
                 variables
             ),
-        backcompatQueryLSP: () =>
-            throwError(
-                'queryLSP is no longer implemented; extensions must manage their own connection to a language server'
-            ),
         forceUpdateTooltip: () => Tooltip.forceUpdate(),
         createExtensionHost: () => {
             const worker = new ExtensionHostWorker()

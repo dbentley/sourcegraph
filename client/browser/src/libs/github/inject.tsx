@@ -84,10 +84,6 @@ function injectOpenOnSourcegraphButton(): void {
     storage.getSync(items => {
         const container = createOpenOnSourcegraphIfNotExists()
 
-        if (items.featureFlags.useExtensions) {
-            container.classList.add('use-extensions')
-        }
-
         const pageheadActions = document.querySelector('.pagehead-actions')
         if (!pageheadActions || !pageheadActions.children.length) {
             return
