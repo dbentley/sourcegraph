@@ -244,21 +244,17 @@ func CookieMiddlewareWithCSRFSafety(next http.Handler, corsAllowHeader string, i
 		w.Header().Add("Vary", "Cookie, Authorization, "+corsAllowHeader)
 
 		_, isTrusted := r.Header[corsAllowHeader]
-		fmt.Println("is trusted", isTrusted)
 		if !isTrusted {
 			isTrusted = isTrustedOrigin(r)
 		}
-		fmt.Println("is trusted", isTrusted)
 		if !isTrusted {
 			contentType := r.Header.Get("Content-Type")
 			isTrusted = contentType == "application/json" || contentType == "application/json; charset=utf-8"
 		}
-		fmt.Println("is trusted", isTrusted)
 		if !isTrusted {
 			// See NOTE in docstring for why this is special-case allowed.
 			isTrusted = strings.HasPrefix(r.URL.Path, "/.api/telemetry/log/")
 		}
-		fmt.Println("is trusted", isTrusted)
 		if isTrusted {
 			r = r.WithContext(authenticateByCookie(r, w))
 		}
@@ -277,7 +273,6 @@ func authenticateByCookie(r *http.Request, w http.ResponseWriter) context.Contex
 			// auth provider for auth, not the user's old session.
 			_ = deleteSession(w, r)
 		}
-		fmt.Println("1")
 		return r.Context() // unchanged
 	}
 
@@ -290,14 +285,12 @@ func authenticateByCookie(r *http.Request, w http.ResponseWriter) context.Contex
 			log15.Warn("Error reading session actor. The session cookie was invalid and will be cleared. This error can be safely ignored unless it persists.", "err", err)
 		}
 		_ = deleteSession(w, r) // clear the bad value
-		fmt.Println("2")
 		return r.Context()
 	}
 	if info != nil {
 		// Check expiry
 		if info.LastActive.Add(info.ExpiryPeriod).Before(time.Now()) {
 			_ = deleteSession(w, r) // clear the bad value
-			fmt.Println("3")
 			return actor.WithActor(r.Context(), &actor.Actor{})
 		}
 
@@ -310,7 +303,6 @@ func authenticateByCookie(r *http.Request, w http.ResponseWriter) context.Contex
 				// want that to cause all active users to be signed out.
 				log15.Error("Error looking up user for session.", "uid", info.Actor.UID, "error", err)
 			}
-			fmt.Println("4")
 			return r.Context() // not authenticated
 		}
 
@@ -319,16 +311,13 @@ func authenticateByCookie(r *http.Request, w http.ResponseWriter) context.Contex
 			info.LastActive = time.Now()
 			if err := SetData(w, r, "actor", info); err != nil {
 				log15.Error("error renewing session", "error", err)
-				fmt.Println("5")
 				return r.Context()
 			}
 		}
 
 		info.Actor.FromSessionCookie = true
-		fmt.Println("6")
 		return actor.WithActor(r.Context(), info.Actor)
 	}
 
-	fmt.Println("7")
 	return r.Context()
 }
