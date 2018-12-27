@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, Unsubscribable } from 'rxjs'
-import { map, tap } from 'rxjs/operators'
+import { map } from 'rxjs/operators'
 import { getModeFromPath } from '../../../languages'
 import { TextDocumentRegistrationOptions } from '../../protocol'
 import { match, TextDocumentIdentifier } from '../types/textDocument'

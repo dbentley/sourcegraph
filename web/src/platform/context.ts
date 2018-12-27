@@ -1,4 +1,4 @@
-import { concat, Observable, ReplaySubject, throwError } from 'rxjs'
+import { concat, Observable, ReplaySubject } from 'rxjs'
 import { map, publishReplay, refCount } from 'rxjs/operators'
 import ExtensionHostWorker from 'worker-loader!../../../shared/src/api/extension/main.worker.ts'
 import { createWebWorkerMessageTransports } from '../../../shared/src/api/protocol/jsonrpc2/transports/webWorker'
