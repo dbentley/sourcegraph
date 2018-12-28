@@ -11,6 +11,8 @@ all_oss_commands=" gitserver query-runner github-proxy management-console search
 # GOMOD_ROOT is the directory from which `go install` commands are run. It should contain a go.mod
 # file. The go.mod file may be updated as a side effect of updating the dependencies before the `go
 # install`.
+
+set -x
 GOMOD_ROOT=${GOMOD_ROOT:-$PWD}
 echo >&2 "Running \`go install\` from $GOMOD_ROOT"
 
@@ -145,3 +147,5 @@ if [ -n "$failed" ]; then
 	echo >&2 "failed to build:$failed"
 	exit 1
 fi
+
+env
